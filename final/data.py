@@ -7,7 +7,8 @@ Classe Permettant de représenter les données d'un problème.
 """
 
 from serde import serde
-
+import pandas as pd
+import numpy as np
 
 @serde
 class Donnees:
@@ -49,6 +50,26 @@ class Donnees:
     ...         ("Fibre", 45),
     ...     ],
     ... )
+    
+    from .data import Donnees
+from serde.json import to_json, from_json
+
+essai = Donnees(
+    nutriments=["Kcal", "Protéines", "Glucides",
+                "Lipides", "Fer", "Calcium", "Fibre"],
+    aliments_index=25,
+    contraintes_nutriments=[(0, 5)],
+    contraintes_couts=[12],
+    besoins_journaliers=[
+        ("Kcal", 2000),
+        ("Protéines", 75),
+        ("Glucides", 225),
+        ("Lipides", 90),
+        ("Fer", 9),
+        ("Fibre", 45),
+    ],
+)
+
     >>> essai
     Donnees(personnages=['Berger', 'Loup', 'Mouton', 'Choux'], nb_places=2, rameurs=['Berger'],
     contraintes=[('Berger', ['Loup', 'Mouton']), ('Berger', ['Mouton', 'Choux'])])
@@ -90,3 +111,29 @@ class Donnees:
                 if apport <= 0:
                     raise ValueError(
                         "Le besoin de nutriments doit être positif")
+
+class DietProblem:
+    def __init__(self, A, z_ori, Marie):
+        self.coeff = A[:-1]
+        self.z_ori = z_ori
+        self.Marie = Marie
+        
+        # Conversion des coefficients et du second membre en DataFrame Pandas
+        self.coeff_df = pd.DataFrame(self.coeff, columns=self.get_ingredient_names())
+        self.Marie_df = pd.DataFrame({"Marie": self.Marie}, index=self.get_nutriment_names())
+
+    @classmethod
+    def from_csv(cls, filename):
+        # Lecture des données depuis un fichier CSV
+        df = pd.read_csv(filename, sep=";", index_col=0)
+        A = df.values.T
+        z_ori = A[-1]
+        Marie = np.array([75, 90, 225, 2000, 9, 800, 45])  # Valeurs pour Marie
+        
+        return cls(A, z_ori, Marie)
+
+    def get_ingredient_names(self):
+        return list(self.coeff_df.columns)
+
+    def get_nutriment_names(self):
+        return list(self.Marie_df.index)
