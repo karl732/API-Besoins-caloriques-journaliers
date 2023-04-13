@@ -1,6 +1,6 @@
 # Exemple de projet
 
-On va développer une application permettant de résoudre une classe de problème comprenant, entre autre, le problème de traversée  de rivière.
+On va développer une application permettant de résoudre une classe de problème comprenant, entre autre, le problème de génerer un menu.
 
 ## Description
 
@@ -9,7 +9,7 @@ On a deux commandes.
 
 ### Exemple
 
-On peut d'abord générer un exemple de fichier décrivant l'exemple correspondant à la traversée du berger, loup, mouton et chou via.
+On peut d'abord générer un exemple de fichier décrivant l'exemple correspondant à la résolution classique du problème de manière statique.
 
 ```sh
 python -m final exemple donnees.json
