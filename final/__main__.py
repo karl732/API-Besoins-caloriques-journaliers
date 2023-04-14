@@ -3,14 +3,14 @@
 Application ligne de commande pour la librairie du menu alimentaire.
 """
 from .data import Donnees
-from .resolution import solve_diet_problem
+from .lib_resolution import resoud
 from serde.json import from_json, to_json
 import typer
 from rich import print
 
-app = typer.Typer()
+application = typer.Typer()
 
-@app.command()
+@application.command()
 def essai(nom_fichier: str):
     essai = Donnees(
         nutriments=["Kcal", "Protéines", "Glucides",

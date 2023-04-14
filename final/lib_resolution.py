@@ -1,19 +1,46 @@
-import __main__ as dp
-from lib_conversion import *
+"""Description.
+
+Librairie de résolution du problème complet.
+"""
+from .data import Donnees
 import numpy as np
-from scipy.optimize import linprog
-from lib_conversion import convert_data
+import scipy.optimize as opt
 
-
-def solve_diet_problem():
-    # Conversion des données en numpy arrays
-    A, b, c = convert_data(dp)
-    # Résolution du problème
-    res = linprog(c, A_eq=A, b_eq=b, bounds=(0, None), method='simplex')
-    # Affichage des résultats
-    x = res.x
-    print("Le coût minimum est de :", round(res.fun, 2), "€.")
-    print("Les quantités à prendre pour avoir un régime équilibré sont les suivantes :")
-    for i in range(len(x)):
-        print(dp['Aliment'][i], round(x[i], 2), dp['Unité'][i])
-        print("total coûts des ingrédients = ", round(np.dot(c, x), 2))
+def resoud(donnees):
+    # Extraire les données de l'objet Donnees
+    nutriments = Donnees.nutriments
+    aliments_index = Donnees.aliments_index
+    contraintes_aliments = Donnees.contraintes_aliments
+    contraintes_couts = Donnees.contraintes_couts
+    besoins_journaliers = Donnees.besoins_journaliers
+    
+    # Extraire les valeurs associées à chaque aliment
+    aliments = np.genfromtxt("Aliments.csv", delimiter=";", skip_header=1)
+    aliments = aliments[:, 1:aliments_index+1].T
+    
+    # Formater les contraintes des nutriments
+    A_ub = -aliments[:, :-1]
+    b_ub = -np.array(contraintes_aliments)[:, 0]
+    b_ub[b_ub == 0] = None
+    
+    # Formater les contraintes des coûts
+    b_eq = contraintes_couts[0]
+    
+    # Formater les besoins journaliers
+    #k = int
+    betaF=np.array([75,90,225,9,800,45,-12]) 
+    
+    # Formater la fonction objectif(minimiser le coût)
+    c = -aliments[:, -1]
+    
+    # Résoudre le problème d'optimisation linéaire
+    result = opt.linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=betaF, b_eq=b_eq)
+    
+    # Formatter la solution
+    solution = {}
+    for i, nutriment in enumerate(nutriments):
+        solution[nutriment] = round(
+            np.sum(aliments[:, i] * result.x), 2
+        )
+    solution["coût"] = round(np.sum(aliments[:, -1] * result.x), 2)
+    return solution
