@@ -1,8 +1,8 @@
 import __main__ as dp
-from conversion import *
+from lib_conversion import *
 import numpy as np
 from scipy.optimize import linprog
-from conversion import convert_data
+from lib_conversion import convert_data
 
 
 def solve_diet_problem():
