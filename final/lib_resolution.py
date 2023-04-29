@@ -84,7 +84,7 @@ afin de vérifier si l'optimisation est un succès : OptimizeResult.status
 
     # Formater les besoins journaliers
     # k = int
-    betaF = np.array([75, 90, 225, 9, 800, 45, -12])
+    betaF = np.array([75,90,225,2000,9,800,45])
 
     # Formater la fonction objectif(minimiser le coût)
     c = -aliments[:, -1]
@@ -111,4 +111,4 @@ afin de vérifier si l'optimisation est un succès : OptimizeResult.status
     REPAS = apports(RESULT)
     Phrase += ' Il coûte un total de {:0.2f} euros et comprend {:0.2f} calories.'.format(
         RESULT.fun, REPAS['Energie (kcal)'][-1])
-    print(Phrase)
+    return Phrase
