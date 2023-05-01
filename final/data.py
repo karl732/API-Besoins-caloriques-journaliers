@@ -10,7 +10,7 @@ from serde import serde
 
 @serde
 class Donnees:
-    """Représente les données du problème du menu dietétique.
+    """Représente les données du problème de résolution linprog.
 
     nutriments: liste de caractères
     besoins_journaliers: liste de couples nutriments / valeur associée
@@ -55,30 +55,11 @@ essai = Donnees(
     contraintes=[('Berger', ['Loup', 'Mouton']), ('Berger', ['Mouton', 'Choux'])])
     """
 
-    nutriments: list[str]
-    aliments_index: int
-    contraintes_aliments: tuple[int, int]
-    contraintes_couts: list[int]
-    besoins_journaliers: list[tuple[str, int]]
+    betaF: list[int]
 
     def __post_init__(self):
-        if self.aliments_index < 0:
-            raise ValueError("L'indice de l'aliment positif ou nul")
-        for mini, maxi in self.contraintes_aliments:
-            if mini < 0:
-                raise ValueError(
-                    "La valeure minimale doit être positive ou supérieure à zéro")
-            if maxi < mini:
-                raise ValueError(
-                    "La valeure max doit être supérieure à la valeure min")
-        if self.contraintes_couts <= 0:
-            raise ValueError("Le prix du menu doit être positif.")
-        for nutriment, apports in self.besoins_journaliers:
-            if nutriment not in self.nutriments:
-                raise ValueError(
-                    "Les nutriments doivent être des nutriments existants."
-                )
-            for apport in apports:
-                if apport <= 0:
-                    raise ValueError(
-                        "Le besoin de nutriments doit être positif")
+        for valeurs in self.betaF:
+            if valeurs < 0:
+                raise ValueError("Les besoins journaliers doivent être supérieure ou égal à zéro.")
+        if len(self.betaF) != 7:
+            raise ValueError("La valeur des 7 différents nutriments doit être fournie.")

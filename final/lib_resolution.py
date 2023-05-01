@@ -9,7 +9,7 @@ import scipy.optimize as so
 from .data import Donnees
 
 # Extraire les valeurs associées à chaque aliment
-Al = pd.read_csv('./Aliments.csv', sep=';', index_col=0)
+Al = pd.read_csv('final\Aliments.csv', sep=';', index_col=0)
 aliments = np.array(Al).T
 
 
@@ -56,7 +56,7 @@ def rename_aliment(old_name):
     return new_name
 
 
-def resoud(donnees: Donnees):
+def resoud(donnees: Donnees) -> str:
     """_summary_
 
 afin de vérifier si l'optimisation est un succès : OptimizeResult.status
@@ -76,26 +76,32 @@ afin de vérifier si l'optimisation est un succès : OptimizeResult.status
 
     # Formater les contraintes des aliments
     coeff = aliments[:, :-1]
-    bdns = [(0, None) for k in range(41)]
-    bdns[25] = (0, 5)
+    bdns = [(0,None) for k in range(41)]
+    bdns[38] = (0,5)
 
     # Formater les contraintes des coûts
     # b_eq = contraintes_couts[0]
 
     # Formater les besoins journaliers
     # k = int
-    betaF = np.array([75,90,225,2000,9,800,45])
+    betaFE = np.array(donnees.betaF)
 
     # Formater la fonction objectif(minimiser le coût)
     c = -aliments[:, -1]
 
     # Résoudre le problème d'optimisation linéaire
-    RESULT = so.linprog(c, A_ub=-coeff, b_ub=-betaF, method='simplex')
-    # Formatter la solution
+    RESULT = so.linprog(c, A_ub=-coeff, b_ub=-betaFE, method='simplex', bounds=bdns)
+    if RESULT.success !=True:
+        raise ValueError("L'optimisation sans contraintes supplémentaires est un échec")
+    RESULTF= so.linprog(c, A_ub=np.concatenate((-coeff,coeff),axis=0), b_ub=np.concatenate((-betaFE,1.1*betaFE),axis=0),method='simplex')
+    if RESULTF.success !=True:
+        raise ValueError("L'optimisation avec contraintes supplémentaires est un échec")
+    
+    # Formatter la solution sans limite
     A = RESULT.x
     u, = A.nonzero()
     Qt = A[u]
-    Phrase = 'Un repas est constitué de '
+    Phrase = 'Un repas sans contrainte supplémentaires est constitué de '
     for s in range(len(u)-1):
         if s > 0:
             Phrase += ','
@@ -109,6 +115,26 @@ afin de vérifier si l'optimisation est un succès : OptimizeResult.status
     name = rename_aliment(old_name)
     Phrase += ' et de {:0.2f} g de {}. '.format(gr, name)
     REPAS = apports(RESULT)
-    Phrase += ' Il coûte un total de {:0.2f} euros et comprend {:0.2f} calories.'.format(
+    Phrase += ' Il coûte un total de {:0.2f} euros et comprend {:0.2f} calories. Nous avons fixé une limite à la quantité de haricots blancs pour avoir un repas plus varié'.format(
         RESULT.fun, REPAS['Energie (kcal)'][-1])
-    return Phrase
+    # Formatter la solution avec limite de 10%
+    B = RESULTF.x
+    u_2, = B.nonzero()
+    Qt = A[u_2]
+    Phrase_2 = 'Un repas avec 10% de contraintes supplémentaires est constitué de '
+    for s in range(len(u_2)-1):
+        if s > 0:
+            Phrase_2 += ','
+        gr = Qt[s]*100
+        old_name = Al.iloc[u_2].index[s]
+        name = rename_aliment(old_name)
+        Phrase_2 += ' de {:0.2f} g de {}'.format(gr, name)
+    s = len(u_2)-1
+    gr = Qt[s]*100
+    old_name = Al.iloc[u_2].index[s]
+    name = rename_aliment(old_name)
+    Phrase_2 += ' et de {:0.2f} g de {}. '.format(gr, name)
+    REPAS = apports(RESULTF)
+    Phrase_2 += ' Il coûte un total de {:0.2f} euros et comprend {:0.2f} calories.'.format(
+        RESULTF.fun, REPAS['Energie (kcal)'][-1])
+    return Phrase, Phrase_2

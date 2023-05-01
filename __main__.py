@@ -2,8 +2,9 @@
 
 Application ligne de commande pour la librairie du menu alimentaire.
 """
-from .data import Donnees
-from .lib_resolution import resoud
+
+from final.data import Donnees
+from final.lib_resolution import resoud
 from serde.json import from_json, to_json
 import typer
 from rich import print
@@ -13,27 +14,15 @@ application = typer.Typer()
 @application.command()
 def essai(nom_fichier: str):
     essai = Donnees(
-        nutriments=["Kcal", "Protéines", "Glucides",
-                "Lipides", "Fer", "Calcium", "Fibre"],
-        aliments_index=25,
-        contraintes_nutriments=[(0, 5)],
-        contraintes_couts=[12],
-        besoins_journaliers=[
-        ("Kcal", 2000),
-        ("Protéines", 75),
-        ("Glucides", 225),
-        ("Lipides", 90),
-        ("Fer", 9),
-        ("Fibre", 45),
-        ],
+        betaF= [75,90,225,2000,9,800,45],
     )
     
     code = to_json(essai)
     
     with open(nom_fichier, "w") as fichier:
         fichier.write(code)
-        
-        
+
+
 @application.command()
 def calcule(nom_fichier: str):
     with open(nom_fichier, "r") as fichier:
