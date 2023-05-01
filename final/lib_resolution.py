@@ -2,9 +2,12 @@
 
 Librairie de résolution du problème complet.
 """
+
+import warnings
 import numpy as np
 import pandas as pd
 import scipy.optimize as so
+from serde.json import from_json, to_json
 
 from .data import Donnees
 
@@ -13,7 +16,7 @@ Al = pd.read_csv('final\Aliments.csv', sep=';', index_col=0)
 aliments = np.array(Al).T
 
 
-def apports(RESULT):
+def apports(RESULT) -> pd.DataFrame:
     """La fonction apport permet de calculer les apports de chaque aliments nécessaire pour réaliser l'optimum.
 
     Args:
@@ -44,7 +47,7 @@ def apports(RESULT):
     return REPAS
 
 
-def rename_aliment(old_name):
+def rename_aliment(old_name) -> str:
     """
     Fonction qui permet d'enlever le type de chaque aliment de sorte à fournir un résultat plus clair.
     """
@@ -75,7 +78,7 @@ afin de vérifier si l'optimisation est un succès : OptimizeResult.status
     # besoins_journaliers = Donnees.besoins_journaliers
 
     # Formater les contraintes des aliments
-    coeff = aliments[:, :-1]
+    coeff = aliments[:-1] 
     bdns = [(0,None) for k in range(41)]
     bdns[38] = (0,5)
 
@@ -84,12 +87,17 @@ afin de vérifier si l'optimisation est un succès : OptimizeResult.status
 
     # Formater les besoins journaliers
     # k = int
+    with open('../donnees.json', 'r') as f:
+        donnees = from_json(Donnees,f.read())
     betaFE = np.array(donnees.betaF)
 
     # Formater la fonction objectif(minimiser le coût)
-    c = -aliments[:, -1]
+    c = aliments[-1]
 
     # Résoudre le problème d'optimisation linéaire
+    
+    ## désactiver les avertissements de type "DeprecationWarning"
+    warnings.simplefilter('ignore', DeprecationWarning)
     RESULT = so.linprog(c, A_ub=-coeff, b_ub=-betaFE, method='simplex', bounds=bdns)
     if RESULT.success !=True:
         raise ValueError("L'optimisation sans contraintes supplémentaires est un échec")
@@ -97,44 +105,47 @@ afin de vérifier si l'optimisation est un succès : OptimizeResult.status
     if RESULTF.success !=True:
         raise ValueError("L'optimisation avec contraintes supplémentaires est un échec")
     
+    ## réactiver les avertissements de type "DeprecationWarning"
+    warnings.simplefilter('default', DeprecationWarning)
+    
     # Formatter la solution sans limite
     A = RESULT.x
     u, = A.nonzero()
     Qt = A[u]
-    Phrase = 'Un repas sans contrainte supplémentaires est constitué de '
+    Phrase = "Un repas sans contrainte supplémentaires est constitué de "
     for s in range(len(u)-1):
         if s > 0:
-            Phrase += ','
+            Phrase += ","
         gr = Qt[s]*100
         old_name = Al.iloc[u].index[s]
         name = rename_aliment(old_name)
-        Phrase += ' de {:0.2f} g de {}'.format(gr, name)
+        Phrase += " de {:0.2f} g de {}".format(gr, name)
     s = len(u)-1
     gr = Qt[s]*100
     old_name = Al.iloc[u].index[s]
     name = rename_aliment(old_name)
-    Phrase += ' et de {:0.2f} g de {}. '.format(gr, name)
+    Phrase += " et de {:0.2f} g de {}. ".format(gr, name)
     REPAS = apports(RESULT)
-    Phrase += ' Il coûte un total de {:0.2f} euros et comprend {:0.2f} calories. Nous avons fixé une limite à la quantité de haricots blancs pour avoir un repas plus varié'.format(
+    Phrase += " Il coûte un total de {:0.2f} euros et comprend {:0.2f} calories. Nous avons fixé une limite à la quantité de haricots blancs pour avoir un repas plus varié.".format(
         RESULT.fun, REPAS['Energie (kcal)'][-1])
     # Formatter la solution avec limite de 10%
     B = RESULTF.x
     u_2, = B.nonzero()
     Qt = A[u_2]
-    Phrase_2 = 'Un repas avec 10% de contraintes supplémentaires est constitué de '
+    Phrase_2 = " Un repas avec 10% de contraintes supplémentaires est constitué de "
     for s in range(len(u_2)-1):
         if s > 0:
-            Phrase_2 += ','
+            Phrase_2 += ","
         gr = Qt[s]*100
         old_name = Al.iloc[u_2].index[s]
         name = rename_aliment(old_name)
-        Phrase_2 += ' de {:0.2f} g de {}'.format(gr, name)
+        Phrase_2 += " de {:0.2f} g de {}".format(gr, name)
     s = len(u_2)-1
     gr = Qt[s]*100
     old_name = Al.iloc[u_2].index[s]
     name = rename_aliment(old_name)
-    Phrase_2 += ' et de {:0.2f} g de {}. '.format(gr, name)
+    Phrase_2 += " et de {:0.2f} g de {}. ".format(gr, name)
     REPAS = apports(RESULTF)
-    Phrase_2 += ' Il coûte un total de {:0.2f} euros et comprend {:0.2f} calories.'.format(
+    Phrase_2 += " Il coûte un total de {:0.2f} euros et comprend {:0.2f} calories.".format(
         RESULTF.fun, REPAS['Energie (kcal)'][-1])
     return Phrase, Phrase_2

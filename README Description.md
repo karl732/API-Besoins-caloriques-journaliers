@@ -20,10 +20,10 @@ On pourra ensuite le modifier pour décrire un nouveau problème.
 
 ### Calcule
 
-On peut aussi chercher à résoudre un problème de ce type, encodé dans in fichier (ici `probleme.json`).
+On peut aussi chercher à résoudre un problème de ce type, encodé dans in fichier (ici `donnees.json`).
 
 ```sh
-python -m final calcule probleme.json
+python -m final calcule donnees.json
 ```
 
 ## Remarques

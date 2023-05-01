@@ -63,3 +63,9 @@ essai = Donnees(
                 raise ValueError("Les besoins journaliers doivent être supérieure ou égal à zéro.")
         if len(self.betaF) != 7:
             raise ValueError("La valeur des 7 différents nutriments doit être fournie.")
+        for nombre in self.betaF:
+            if not isinstance(nombre, int) or not float(nombre).is_integer():
+                raise ValueError("Les besoins journaliers doivent être des entiers.")
+            else:
+                # le nombre est un entier
+                pass
