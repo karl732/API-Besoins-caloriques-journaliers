@@ -10,6 +10,8 @@ import scipy.optimize as so
 from serde.json import from_json, to_json
 
 from .data import Donnees
+from typing import Tuple
+
 
 # Extraire les valeurs associées à chaque aliment
 Al = pd.read_csv('final\Aliments.csv', sep=';', index_col=0)
@@ -59,7 +61,7 @@ def rename_aliment(old_name) -> str:
     return new_name
 
 
-def resoud(donnees: Donnees) -> str:
+def resoud(donnees: Donnees) -> Tuple[str, str]:
     """_summary_
 
 afin de vérifier si l'optimisation est un succès : OptimizeResult.status

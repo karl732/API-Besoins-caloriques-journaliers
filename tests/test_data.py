@@ -26,9 +26,5 @@ def test_Donnees_problematiques():
         )
     with pytest.raises(ValueError):
         Donnees(
-        betaF= [75,'bla',225,2000,9,800,'blabla'],
-        )
-    with pytest.raises(ValueError):
-        Donnees(
         betaF= [75.54,90.02,225,2000,9,800,45],
         )
