@@ -9,7 +9,7 @@ On a deux commandes.
 
 ### Exemple
 
-On peut d'abord générer un exemple de fichier décrivant l'exemple correspondant à la résolution classique du problème de manière statique.
+On peut d'abord générer un exemple de fichier décrivant l'exemple correspondant à la résolution classique du problème de manière statique. Puit permettre à l'utilisateur de saisir ses données.
 
 ```sh
 python -m final exemple donnees.json

@@ -7,65 +7,33 @@ Classe Permettant de représenter les données d'un problème.
 """
 
 from serde import serde
+from rich import print
 
 @serde
 class Donnees:
-    """Représente les données du problème de résolution linprog.
+    """Représente les données du problème de résolution d'optimisation alimentaire.
 
-    nutriments: liste de caractères
-    besoins_journaliers: liste de couples nutriments / valeur associée
-    aliments: liste d'index des aliments que l'on veut contraindre
-    contraintes_aliments: liste de tuples valeurs seuils pour ce aliments
-    contraintes_couts: liste de valeures seuils de prix de menu
-
-    On vérifie après l'instanciation que le problème est "raisonnable":
-
-    - les prix sont positifs
-    - les nutriments des besoins journaliers sont existant
-
+    betaF: liste des besoins journaliers pour les 7 nutriments principaux
+           [Kcal, Protéines, Glucides, Lipides, Fer, Calcium, Fibres]
+    
     La sérialisation est fait automatiquement vers json, yaml et toml via pyserde.
 
-essai = Donnees(
-    nutriments=["Kcal", "Protéines", "Glucides",
-                "Lipides", "Fer", "Calcium", "Fibre"],
-    aliments_index=25,
-    contraintes_nutriments=[(0, 5)],
-    contraintes_couts=[12],
-    besoins_journaliers=[
-        ("Kcal", 2000),
-        ("Protéines", 75),
-        ("Glucides", 225),
-        ("Lipides", 90),
-        ("Fer", 9),
-        ("Fibre", 45),
-    ],
-)
-
-    >>> essai
-    Donnees(personnages=['Berger', 'Loup', 'Mouton', 'Choux'], nb_places=2, rameurs=['Berger'],
-    contraintes=[('Berger', ['Loup', 'Mouton']), ('Berger', ['Mouton', 'Choux'])])
+    Exemple:
+    >>> essai = Donnees(betaF=[2000, 75, 225, 90, 9, 800, 45])
     >>> from serde.json import to_json, from_json
     >>> code = to_json(essai)
-    >>> code
-    '{"personnages": ["Berger", "Loup", "Mouton", "Choux"], "nb_places": 2, "rameurs": ["Berger"],
-    "contraintes": [["Berger", ["Loup", "Mouton"]], ["Berger", ["Mouton", "Choux"]]]}'
     >>> decode = from_json(Donnees, code)
-    >>> decode
-    Donnees(personnages=['Berger', 'Loup', 'Mouton', 'Choux'], nb_places=2, rameurs=['Berger'],
-    contraintes=[('Berger', ['Loup', 'Mouton']), ('Berger', ['Mouton', 'Choux'])])
     """
 
     betaF: list[int]
 
     def __post_init__(self):
-        for valeurs in self.betaF:
-            if valeurs < 0:
-                raise ValueError("Les besoins journaliers doivent être supérieure ou égal à zéro.")
+        """Validation des données après initialisation."""
         if len(self.betaF) != 7:
             raise ValueError("La valeur des 7 différents nutriments doit être fournie.")
-        for nombre in self.betaF:
-            if not isinstance(nombre, int) or not float(nombre).is_integer():
-                raise ValueError("Les besoins journaliers doivent être des entiers.")
-            else:
-                # le nombre est un entier
-                pass
+        
+        nutriments = ["Kcal", "Protéines", "Glucides", "Lipides", "Fer", "Calcium", "Fibres"]
+        
+        for i, valeur in enumerate(self.betaF):
+            if not isinstance(valeur, (int, float)) or valeur < 0:
+                raise ValueError(f"Le besoin journalier pour {nutriments[i]} doit être un nombre positif.")
