@@ -3,7 +3,6 @@
 <div align="center">
 
 ![Python](https://img.shields.io/badge/python-3.9+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Streamlit](https://img.shields.io/badge/streamlit-1.28+-red.svg)
 ![Status](https://img.shields.io/badge/status-active-success.svg)
 
