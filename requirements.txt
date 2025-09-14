@@ -1,0 +1,15 @@
+# Core dependencies
+streamlit>=1.28.0
+pandas>=2.0.1
+numpy>=1.24.0
+scipy>=1.10.0
+rich>=11.2.0
+pyserde>=0.7.0
+typer>=0.4.0
+
+# Development dependencies (optional)
+pytest>=7.0
+black>=22.1.0
+pytest-cov>=3.0.0
+pylama>=8.3.7
+mypy>=1.2.0
