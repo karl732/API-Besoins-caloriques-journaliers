@@ -226,3 +226,172 @@ def resoud(donnees: Donnees) -> Tuple[str, str]:
     Phrase_2 += " Il coûte un total de {:0.2f} euros et comprend {:0.2f} calories.".format(
         RESULTF.fun, REPAS['Energie (kcal)'].iloc[-1])
     return Phrase, Phrase_2
+
+
+def resoud_avec_contraintes(donnees: Donnees, budget_max: float = None, 
+                           marge_pourcentage: float = 0.1, 
+                           limite_haricots: bool = True) -> Tuple[str, str]:
+    """Résout le problème d'optimisation avec contraintes personnalisées.
+    
+    Args:
+        donnees: Besoins nutritionnels
+        budget_max: Budget maximum en euros (None = pas de limite)
+        marge_pourcentage: Pourcentage de marge (0.1 = 10%)
+        limite_haricots: Limiter les haricots blancs à 500g
+        
+    Returns:
+        tuple: (solution_base, solution_avec_marge)
+    """
+    # Valider les données et afficher des avertissements si nécessaire
+    valider_donnees(donnees)
+    
+    # Formater les contraintes des aliments
+    coeff_reordered = np.array([
+        aliments[3],  # Energie (kcal)
+        aliments[0],  # Protéines  
+        aliments[2],  # Glucides
+        aliments[1],  # Lipides
+        aliments[4],  # Fer
+        aliments[5],  # Calcium
+        aliments[6]   # Fibres
+    ])
+    
+    # Contraintes sur les quantités d'aliments
+    bdns = [(0, None) for k in range(41)]
+    if limite_haricots:
+        bdns[38] = (0, 5)  # Limite sur les haricots blancs
+    
+    betaFE = np.array(donnees.betaF)
+    c = aliments[-1]  # Coûts
+    
+    # Si budget maximum spécifié, ajouter la contrainte budgétaire
+    if budget_max is not None:
+        # Ajouter la contrainte : somme(prix_i * quantité_i) <= budget_max
+        coeff_budget = np.vstack([coeff_reordered, c.reshape(1, -1)])
+        besoins_budget = np.append(betaFE, budget_max)
+    else:
+        coeff_budget = coeff_reordered
+        besoins_budget = betaFE
+    
+    ## Optimisation
+    warnings.simplefilter('ignore', DeprecationWarning)
+    
+    # Première optimisation : solution de base
+    RESULT = None
+    methods = ['highs', 'simplex', 'interior-point']
+    
+    for method in methods:
+        try:
+            RESULT = so.linprog(c, A_ub=-coeff_budget, b_ub=-besoins_budget, 
+                              method=method, bounds=bdns)
+            if RESULT.success:
+                break
+        except:
+            continue
+    
+    # Relaxation si nécessaire
+    if RESULT is None or not RESULT.success:
+        if budget_max is not None:
+            # Essayer sans contrainte budgétaire
+            for method in methods:
+                try:
+                    RESULT = so.linprog(c, A_ub=-coeff_reordered, b_ub=-betaFE, 
+                                      method=method, bounds=bdns)
+                    if RESULT.success:
+                        break
+                except:
+                    continue
+        
+        if RESULT is None or not RESULT.success:
+            # Essayer sans limite haricots
+            bdns_relaxed = [(0, None) for k in range(41)]
+            for method in methods:
+                try:
+                    RESULT = so.linprog(c, A_ub=-coeff_reordered, b_ub=-betaFE, 
+                                      method=method, bounds=bdns_relaxed)
+                    if RESULT.success:
+                        break
+                except:
+                    continue
+    
+    if RESULT is None or not RESULT.success:
+        raise ValueError("Impossible de trouver une solution. Essayez d'augmenter le budget ou de réduire les contraintes.")
+    
+    # Deuxième optimisation avec marge
+    RESULTF = None
+    if marge_pourcentage > 0:
+        marge_factor = 1 + marge_pourcentage
+        
+        # Contraintes avec marge
+        if budget_max is not None:
+            coeff_marge = np.vstack([
+                np.concatenate((-coeff_reordered, coeff_reordered), axis=0),
+                np.concatenate((-c.reshape(1, -1), c.reshape(1, -1)), axis=0)
+            ])
+            besoins_marge = np.concatenate([
+                -betaFE, marge_factor * betaFE, [-budget_max, budget_max]
+            ])
+        else:
+            coeff_marge = np.concatenate((-coeff_reordered, coeff_reordered), axis=0)
+            besoins_marge = np.concatenate((-betaFE, marge_factor * betaFE))
+        
+        for method in methods:
+            try:
+                RESULTF = so.linprog(c, A_ub=coeff_marge, b_ub=besoins_marge, 
+                                   method=method, bounds=bdns)
+                if RESULTF.success:
+                    break
+            except:
+                continue
+    
+    # Si pas de solution avec marge, utiliser la solution de base
+    if RESULTF is None or not RESULTF.success:
+        RESULTF = RESULT
+        constraint_used = "aucune marge supplémentaire (solution identique)"
+    else:
+        constraint_used = f"{int(marge_pourcentage*100)}% de marge nutritionnelle"
+    
+    warnings.simplefilter('default', DeprecationWarning)
+    
+    # Formatter les solutions
+    phrase_base = formatter_solution(RESULT, "sans contrainte supplémentaire")
+    phrase_marge = formatter_solution(RESULTF, f"avec {constraint_used}")
+    
+    return phrase_base, phrase_marge
+
+
+def formatter_solution(result, description: str) -> str:
+    """Formate la solution d'optimisation en phrase lisible."""
+    A = result.x
+    u, = A.nonzero()
+    Qt = A[u]
+    
+    if len(u) == 0:
+        return f"Aucune solution trouvée pour {description}."
+    
+    phrase = f"Un repas {description} est constitué de "
+    
+    for s in range(len(u)-1):
+        if s > 0:
+            phrase += ", "
+        gr = Qt[s] * 100
+        old_name = Al.iloc[u[s]].name
+        name = rename_aliment(old_name)
+        phrase += f"{gr:.1f}g de {name}"
+    
+    # Dernier élément
+    if len(u) > 1:
+        s = len(u) - 1
+        gr = Qt[s] * 100
+        old_name = Al.iloc[u[s]].name
+        name = rename_aliment(old_name)
+        phrase += f" et {gr:.1f}g de {name}"
+    
+    # Calcul des totaux
+    repas = apports(result)
+    cout = result.fun
+    calories = repas['Energie (kcal)'].iloc[-1]
+    
+    phrase += f". Il coûte {cout:.2f}€ et apporte {calories:.0f} calories."
+    
+    return phrase
