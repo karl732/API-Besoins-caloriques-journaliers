@@ -230,31 +230,6 @@ streamlit run app_streamlit.py
 - 🧪 **Tests** : Ajoutez des cas de test
 - 🎨 **UI/UX** : Améliorez l'interface
 
-### 📋 Roadmap
-
-- [ ] 🌍 Support multilingue (EN, ES, DE)
-- [ ] 📱 Application mobile (React Native)
-- [ ] 🤖 Intégration IA pour recommandations
-- [ ] 📊 Tableaux de bord analytics
-- [ ] 🔗 API REST complète
-- [ ] 🥗 Base de données étendue (500+ aliments)
-
-## 📜 Licence
-
-Ce projet est sous licence **MIT** - voir le fichier [LICENSE](LICENSE) pour plus de détails.
-
-## 👥 Auteurs
-
-- **Karl Sondeji** - *Développeur Principal* - [@karlsondeji](https://github.com/karlsondeji)
-
-## 🙏 Remerciements
-
-- 🏫 **Master Économiste d'Entreprise** - Contexte académique
-- 📊 **SciPy Community** - Outils d'optimisation
-- 🎨 **Streamlit Team** - Framework d'interface
-- 🥗 **Base de données nutritionnelles** - Données CIQUAL
-
----
 
 <div align="center">
 
